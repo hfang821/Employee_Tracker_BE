@@ -43,6 +43,21 @@ VALUES
 ('Jona','Ford',13,null),
 ('Lexi','Novikov',14,null),
 ('Brian','Shaw',15,null),
-('Moose','Kent',16,null),
-('Belmont','King',17,null);
+('Bell','Joe',16,null),
+('Bella','Fang',1,null),
+('John','Smith',2,null),
+('Jason','Leng',3,null),
+('Mike','Balazic',4,null),
+('Yomi','Abdulsi',5,null),
+('Ken','Yen',6,null),
+('Will','Li',7,null),
+('Wall','Jin',8,null),
+('Hao','Han',9,null),
+('Jobe','Brown',10,null),
+('Kinger','Martin',11,null),
+('Jaden','Hu',12,null),
+('Martyn','Ford',13,null),
+('The','Rock',14,null),
+('John','Shaw',15,null),
+('Goose','Bent',16,null);
 
