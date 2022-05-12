@@ -1,0 +1,264 @@
+//require npm packages
+const inquirer = require('inquirer');
+const db = require('./db/connection');
+const table = require('console.table');
+const connection = require('./db/connection');
+
+const userPrompt = () =>{
+    inquirer.prompt({
+        type: 'list',
+        name: 'options',
+        message: 'Select a option to proceed',
+        choices: ['View Employees','View Roles', 'View Departments', 'Add an Employee', 'Add a Role', 'Add a department', "Update employee's role", "I'm done."]
+    })
+    //ask TA: why should I use async and await? and if I do, should I keep my other functions asynchronous?
+    .then(async(data) => {
+        switch (data.options) {
+            case 'View Employees':
+                await viewEmployees();
+                break;
+            case 'View Roles':
+                await viewRoles();
+                break;
+            case 'View Departments':
+                await viewDepartments();
+                break;
+            case 'Add an Employee':
+                await addEmployee();
+                break;
+            case 'Add a Role':
+                await addRole();
+                break;
+            case 'Add a department':
+                await addDepartment();
+                break;
+            case "Update employee's role":
+                await updateRole();
+                break;
+            default:
+                console.log("exiting...");
+                connection.end();
+        }
+    });
+};
+
+const followUp = () =>{
+    inquirer.prompt([
+        {
+            name: "followup",
+            type: "confirm",
+            message: "Do you want to return to the main menu?"
+        }
+    ]). then(answer => {
+        if(answer.followUp === true) {
+            userPrompt();
+        } else {
+            console.log('You have exited the program.');
+            connection.end();
+        }
+    })
+}
+
+//async method
+//ask TA: which one to use?
+const viewEmployees = () =>{
+    const sql = `
+    SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name, role.salary
+    FROM employee
+    LEFT JOIN role ON employee.role_id = role.id 
+    LEFT JOIN department ON role.department_id = department.id
+    `;
+    //how should I join the manager id in here?
+    //how can I properly use the promise function?
+    db.promise().query(sql)
+    .then(([rows,fields])=>{
+        const showTable = table.getTable(rows);
+        console.log(showTable);
+    })
+    .catch(err =>console.log(err));
+}
+
+//sync method
+const viewRoles = () =>{
+    const sql = `SELECT * FROM role;`;
+    db.query(sql,(err, result) =>{
+        if(err){
+            console.log(err);
+            return;
+        }
+    const showTable = table.getTable(result);
+    console.log(showTable);
+    })
+}
+
+const viewDepartments = () =>{
+    const sql = `SELECT * FROM department;`;
+    db.query(sql,(err, result) =>{
+        if(err){
+            console.log(err);
+            return;
+        }
+    const showTable = table.getTable(result);
+    console.log(showTable);
+    })
+}
+
+const addEmployee = () =>{
+    inquirer.prompt([
+        {
+            type: 'input',
+            name: 'first_name',
+            message: "Enter the employee's first name. (required)",
+            validate: firstName =>{
+                if(firstName){
+                    return true;
+                }
+                console.log("You need to enter a first name");
+                return false;
+            }
+        },
+
+        {
+            type: 'input',
+            name: 'last_name',
+            message: "Enter the employee's last name. (required)",
+            validate: lastName =>{
+                if(lastName){
+                    return true;
+                }
+                console.log("You need to enter a last name");
+                return false;
+            }
+        },
+
+        {
+            type: 'list',
+            name: 'role',
+            message: "What is the employee's role?",
+            choices: roleSelect()
+        },
+
+        {
+            type: 'list',
+            name: 'manager',
+            message: "Who is the employee's manager?",
+            choices: employeeSelect()
+        }
+    ])
+    .then(data =>{
+        //ask TA: how do I connect the role to a role id? && the manager name to a id
+        const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
+        VALUES (data.first_name, data.last_name, ,);`;
+        db.query(sql,(err, result) =>{
+            if (err) throw err;
+            console.log(`${data.firstName} ${data.lastName} has been added as a ${data.role}`);
+            followUp();
+        })
+    })
+}
+
+const addDepartment = () =>{
+    inquirer.prompt([
+        {
+            type: 'input',
+            name: 'department',
+            message: 'What is the name of the department?',
+            validate: departmentName =>{
+                if(departmentName) return true;
+                else{
+                    console.log("You need to enter the name of the department!");
+                    return false;
+                }
+            }
+        }
+    ]).then (data =>{
+        const sql = `INSERT INTO department(name)
+        VALUES ?`;
+        db.query(sql,data.department,(err, result)=>{
+            if(err) throw err;
+            console.log(`${data.department} department is added!`);
+            followUp();
+        });
+    });
+}
+
+const addRole = () =>{
+    inquirer.prompt([
+        {
+            type: 'text',
+            name: 'role',
+            message: 'What is the title of role you want to add?',
+            validate: title =>{
+                if(title) return true;
+                else {
+                    console.log("You need to enter the title of the role!");
+                    return false;
+                }
+            }
+        },
+
+        {
+            type: 'number',
+            name: 'salary',
+            message: 'How much is the salary of this role?',
+        },
+
+        {
+            type: 'list',
+            name: 'department',
+            message: 'Which department does this role belong to?',
+            choices: departmentSelect()
+        }
+    ]).then(data => {
+        const sql = `INSERT INTO role (title, salary, department_id)
+                    VALUES (?,?,?)`;
+        //Ask Ta:
+            db.query(sql,(data.role, data.salary, data.department),(err, result)=> {
+                if(err) throw err;
+                console.log(`${data.role} is added to the ${data.department}!`);
+                followUp();
+        });
+    });
+}
+
+const updateRole = () =>{
+    inquirer.prompt([
+        {
+            type: 'list',
+            name: 'name',
+            message: 'What is the name of the employee you want to update?',
+            choices: employeeSelect()
+        },
+        {
+            type: 'list',
+            name: 'role',
+            message: 'What new role do you want to assign to the employee you want to update?',
+            choices: roleSelect()
+        }
+    ]).then(data => {
+        const sql = `UPDATE employee 
+                    SET role_id = ${data.role}
+                    WHERE first_name =${data.name} AND last_name =${data.name}`
+        //ask TA: how can i get last and first name from the data.name? can I use slice() method?
+        db.query(sql, (err, result) => {
+            if (err) throw err;
+            console.log(`${data.name}'s role has been changed to ${data.role}!`);
+            followUp();
+        })
+    })
+}
+
+const roleSelect =() =>{
+
+}
+
+const employeeSelect =() =>{
+
+}
+
+const departmentSelect =() =>{
+
+}
+
+//start the inquirer prompts
+userPrompt();
