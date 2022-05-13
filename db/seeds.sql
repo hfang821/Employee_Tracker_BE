@@ -32,7 +32,7 @@ VALUES
 ('John','Smith',2,null),
 ('Jason','Leng',3,null),
 ('Mike','Balazic',4,null),
-('Yomi','Abdulsi',5,null),
+('Yomi','Abdulsi',5,1),
 ('Ken','Yen',6,null),
 ('William','Li',7,null),
 ('Wu','Jin',8,null),
