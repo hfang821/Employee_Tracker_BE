@@ -32,6 +32,7 @@ Inquirer &amp; SQL queries Backend
 ![image](https://user-images.githubusercontent.com/95199209/168446089-2de7b758-e9d5-4d22-b7d6-c35e90f19e10.png)
 
 2. Now in your sql command window, type in `source db/db.sql` to create a new database called `employee_tracker_db`
+<br><br>
 ![image](https://user-images.githubusercontent.com/95199209/168446117-c6f48c0c-c126-47a8-8f2f-34d388a5c4d7.png)
 
 3. type in `source db/schema.sql` to feed the relational tables into the database.
