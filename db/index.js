@@ -30,10 +30,23 @@ class DB {
         ) 
     }
 
-    updateRole(){
-        
+    addDepartment(department){
+        console.log(department+" department added")
         return this.connection.promise().query(
-            "write query to update by id", 
+            `INSERT INTO department SET ?`, department
+        )
+    }
+
+    addRole(role){
+        console.log(role+" role added")
+        return this.connection.promise().query(
+            `INSERT INTO role SET ?`, role
+        )
+    }
+
+    updateRole(employeeRole,employeeId){
+        return this.connection.promise().query(
+            `UPDATE employee SET ? WHERE id = ${employeeId}`, employeeRole 
         )
     }
 

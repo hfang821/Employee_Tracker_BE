@@ -104,7 +104,7 @@ const viewRoles = () => {
         const showTable = table.getTable(result);
         console.log(showTable);
         return showTable;
-    })
+    }).then(() => {followUp()});
 }
 
 const viewDepartments = () => {
@@ -116,11 +116,10 @@ const viewDepartments = () => {
         }
         const showTable = table.getTable(result);
         console.log(showTable);
-    })
+    }).then(() => {followUp()});
 }
 
 const addEmployee = () => {
-
     inquirer.prompt([
         {
             type: 'input',
@@ -235,15 +234,16 @@ const addDepartment = () => {
             }
         }
     ]).then(data => {
-        const sql = `INSERT INTO department(name)
-        VALUES ?`;
-        db.query(sql, data.department, (err, result) => {
-            if (err) throw err;
-            console.log(`${data.department} department is added!`);
-            followUp();
-        });
-    });
-}
+        let departmentName = {name: data.department};
+        dbMethods.addDepartment(departmentName)
+        // db.query(sql, data.department, (err, result) => {
+        //     if (err) throw err;
+        //followUp();
+        .then(() => {console.log(`${departmentName.name} department is added!`)})
+        .then(() => followUp())
+    })
+};
+
 
 const addRole = () => {
     inquirer.prompt([
@@ -264,53 +264,143 @@ const addRole = () => {
             type: 'number',
             name: 'salary',
             message: 'How much is the salary of this role?',
-        },
-
-        {
-            type: 'list',
-            name: 'department',
-            message: 'Which department does this role belong to?',
-            choices: departmentSelect()
         }
-    ]).then(data => {
-        const sql = `INSERT INTO role (title, salary, department_id)
-                    VALUES (?,?,?)`;
-        //Ask Ta:
-        db.query(sql, (data.role, data.salary, data.department), (err, result) => {
-            if (err) throw err;
-            console.log(`${data.role} is added to the ${data.department}!`);
-            followUp();
-        });
+    ]).then(answer => {
+        let newTitle = answer.role;
+        let newSalary = answer.salary;
+
+        dbMethods.findAllDepartments()
+        .then(([rows]) => {
+            let departments = rows;
+            const departmentChoices = departments.map(({ id, name }) => ({
+                name: name,
+                value: id
+            }))
+
+            console.log("Department Choices", departmentChoices)
+
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'department',
+                    message: 'Which department does this role belong to?',
+                    choices: departmentChoices
+                }
+            ])
+            .then(answer => {
+                let departmentId = answer.department;
+
+                let role = {
+                    title: newTitle,
+                    salary: newSalary,
+                    department_id: departmentId
+                }
+
+                dbMethods.addRole(role)
+                .then(() => console.log(`Added ${role.title} to the database!`))
+                .then(() => followUp())
+            })
+    }) 
+    // ]).then(data => {
+    //     const sql = `INSERT INTO role (title, salary, department_id)
+    //                 VALUES (?,?,?)`;
+    //     //Ask Ta:
+    //     db.query(sql, (data.role, data.salary, data.department), (err, result) => {
+    //         if (err) throw err;
+    //         console.log(`${data.role} is added to the ${data.department}!`);
+    //         followUp();
+    //     });
     });
 }
 
 const updateRole = () => {
+    //get the table of all employees (Need Bug fix)
+    let employees = dbMethods.findAllEmployees();
+    //map the employees
+    const employeeChoices = employees.map(({ first_name, last_name, id }) => ({
+        name: `${first_name} ${last_name}`,
+        value: id
+    }));
 
     inquirer.prompt([
         {
             type: 'list',
             name: 'name',
             message: 'What is the name of the employee you want to update?',
-            choices: employeeSelect()
-        },
-        {
-            type: 'list',
-            name: 'role',
-            message: 'What new role do you want to assign to the employee you want to update?',
-            choices: roleSelect()
+            choices: employeeChoices
         }
-    ]).then(data => {
-        const sql = `UPDATE employee 
-                    SET role_id = ${data.role}
-                    WHERE first_name =${data.name} AND last_name =${data.name}`
-        //ask TA: how can i get last and first name from the data.name? can I use slice() method?
-        db.query(sql, (err, result) => {
-            if (err) throw err;
-            console.log(`${data.name}'s role has been changed to ${data.role}!`);
-            followUp();
+    ]).then((answer) => {
+        console.log(answer);
+        let firstName = answer.first_name;
+        let lastName = answer.last_name;
+        
+
+            dbMethods.findAllRoles()
+                .then(([rows]) => {
+                    let roles = rows;
+                    const roleChoices = roles.map(({ id, title }) => ({
+                        name: title,
+                        value: id
+                    }))
+
+                    inquirer.prompt([
+                        {
+                            type: 'list',
+                            name: 'role',
+                            message: 'What new role do you want to assign to the employee you want to update?',
+                            choices: roleChoices
+                        }
+                    ])
+                    .then(data => {
+                        let roleId = answer.role
+
+                        dbMethods.findAllEmployees()
+                        .then(([rows]) => {
+                            let employees = rows;
+                            const employeeChoices = employees.map(({ first_name, last_name, id }) => ({
+                                name: `${first_name} ${last_name}`,
+                                value: id
+                            }))
+
+                            inquirer.prompt([
+                                {
+                                    type: 'list',
+                                    name: 'manager',
+                                    message: "Who is the employee's new manager?",
+                                    choices: employeeChoices
+                                }
+                            ])
+                            .then((answer) => {
+                                let employee = 
+                                    {
+                                        first_name: firstName,
+                                        last_name: lastName,
+                                        role_id: roleId,
+                                        manager_id: answer.manager
+                                    }
+                                //ask TA: how to pass in a employee id to be passed into the dbMethods function?
+                                dbMethods.updateRole(employee)
+                                .then(() => console.log(employee.first_name + ' ' + employee.last_name + "'s role has been updated."))
+                                .then(() => followUp())
+                    })
+                })
+            })
         })
     })
 }
+    // .then(data => {
+    //     const sql = `UPDATE employee 
+    //                 SET role_id = ${data.role}
+    //                 WHERE first_name =${data.name} AND last_name =${data.name}`
+    //     //ask TA: how can i get last and first name from the data.name? can I use slice() method?
+    //     db.query(sql, (err, result) => {
+    //         if (err) throw err;
+    //         console.log(`${data.name}'s role has been changed to ${data.role}!`);
+    //         followUp();
+    //     })
+    // })
+
+
 
 //these functions intend to generate a list of roles/employees/departments to choose from.
 // const roleSelect = () => {
