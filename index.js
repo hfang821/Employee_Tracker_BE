@@ -40,12 +40,14 @@ const userPrompt = () => {
                 case "Update employee's role":
                     await updateRole();
                     break;
+                case "I'm done.":
+                    console.log("exiting...");
+                    connection.end();
                 /*
                 default:
                     console.log("exiting...");
                     connection.end();
                 */
-
         }
     });
 };
@@ -69,6 +71,7 @@ const followUp = () => {
 }
 
 //async method
+//view all the employees
 const viewEmployees = async () => {
     const sql = 
     `
@@ -91,30 +94,29 @@ const viewEmployees = async () => {
     }
 }
 
-//.then method
-const viewRoles = () => {
-    const sql = `SELECT * FROM role;`;
-    db.query(sql, (err, result) => {
-        if (err) {
-            console.log(err);
-            return;
-        }
-        const showTable = table.getTable(result);
+//view all roles
+const viewRoles = async() => {
+    try{    
+        const result = await dbMethods.findAllRoles();
+        const [rows,fields] = result;
+        const showTable = table.getTable(rows);
         console.log(showTable);
-        return showTable;
-    }).then(() => {followUp()});
+        followUp();
+    } catch(error){
+        console.log(error);
+    }
 }
 
-const viewDepartments = () => {
-    const sql = `SELECT * FROM department;`;
-    db.query(sql, (err, result) => {
-        if (err) {
-            console.log(err);
-            return;
-        }
-        const showTable = table.getTable(result);
+const viewDepartments = async () => {
+    try {
+        const result = await dbMethods.findAllDepartments();
+        const [rows, fields] = result;
+        const showTable = table.getTable(rows);
         console.log(showTable);
-    }).then(() => {followUp()});
+        followUp();
+    } catch(error) {
+        console.log(error);
+    }
 }
 
 const addEmployee = () => {
