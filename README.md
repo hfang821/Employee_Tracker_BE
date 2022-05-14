@@ -15,6 +15,10 @@ Inquirer &amp; SQL queries Backend
 * npm (console.table)
 
 # Wall-Around Installation Video
+* How to install & how to use: https://drive.google.com/file/d/1S-kOSdN9TpeFM9DgXSlrc8HUmYtJdAM6/view
+* How to seed the database with data: https://drive.google.com/file/d/1CtpPGW-dNAHRgXEdWSWkr6izdURe-R_b/view
+
+
 ## How to Install:
 * Open Gitbash/terminal, navigate towards your project location from your root by using "cd ./ project location"
 * Choose a clone option from the "Employee_Tracker_BE" repository (either HTTPS or SSH should work)
