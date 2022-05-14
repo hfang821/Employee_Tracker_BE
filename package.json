@@ -18,7 +18,9 @@
   },
   "homepage": "https://github.com/hfang821/Employee_Tracker_BE#readme",
   "dependencies": {
+    "console.table": "^0.10.0",
     "express": "^4.18.1",
-    "inquirer": "^8.2.4"
+    "inquirer": "^8.2.4",
+    "mysql2": "^2.3.3"
   }
 }
