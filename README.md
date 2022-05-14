@@ -12,6 +12,7 @@ Inquirer &amp; SQL queries Backend
 * Node.js
 * npm (inquirer.js)
 * npm (mysql2)
+* npm (console.table)
 
 # Wall-Around Installation Video
 ## How to Install:
@@ -20,7 +21,7 @@ Inquirer &amp; SQL queries Backend
 * In Gitbash, type "git clone HTTPS or SSH"
 * Once the clone is successful, navigate to the root directory of this repo.
 * Enter `npm init` into the terminal.
-* Enter `npm install inquirer` into the terminal to install the inquirer.js package, and enter `npm install mysql2` to install the mysql2 package and you are good to go!
+* Enter `npm install inquirer` into the terminal to install the inquirer.js package, Enter `npm install console.table --save` into the terminal to install the console.table package and enter `npm install mysql2` to install the mysql2 package and you are good to go!
 
 
 ## How to Use:
