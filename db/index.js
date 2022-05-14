@@ -1,11 +1,14 @@
 const connection = require("./connection");
 
+
 class DB {
     constructor(connection){
         this.connection = connection;
     }
 
     findAllRoles(){
+        //Put promise here because it takes time to query the DATABASE
+        //Then we know we need to use async/await or .then to in the calling function
         return this.connection.promise().query(
             "SELECT * from role"
         )
@@ -44,15 +47,14 @@ class DB {
         )
     }
 
-    updateRole(employeeRole,employeeId){
+    updateRole(employee){
         return this.connection.promise().query(
-            `UPDATE employee SET ? WHERE id = ${employeeId}`, employeeRole 
+            `UPDATE employee SET role_id = ?, 
+             manager_id = ? 
+             WHERE id = ${employee.id}`
+            ,[employee.role_id, employee.manager_id]
         )
     }
-
-
-
-
 }
 
 module.exports = new DB(connection)

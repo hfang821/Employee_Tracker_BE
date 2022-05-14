@@ -12,10 +12,11 @@ const userPrompt = () => {
         message: 'Select a option to proceed',
         choices: ['View Employees', 'View Roles', 'View Departments', 'Add an Employee', 'Add a Role', 'Add a department', "Update employee's role", "I'm done."]
     })
-        //ask TA: why should I use async and await? and if I do, should I keep my other functions asynchronous?
+        //Question: Why should I use async and await? and if I do, should I keep my other functions asynchronous?
         //Answer is no, because sql queries are asynchronous, which means it is like a api fetch, which takes time (no idea how long it will take).
         //await should always be in a async function.
         //.then is interchangeable with async/await
+
         .then(async (data) => {
             switch (data.options) {
                 case 'View Employees':
@@ -44,10 +45,12 @@ const userPrompt = () => {
                     console.log("exiting...");
                     connection.end();
                 */
-            }
-        });
+
+        }
+    });
 };
 
+//ask the user what they want to do next..
 const followUp = () => {
     inquirer.prompt([
         {
@@ -66,17 +69,17 @@ const followUp = () => {
 }
 
 //async method
-//ask TA: which one to use?
 const viewEmployees = async () => {
-    const sql = `
+    const sql = 
+    `
     SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(manager.first_name, " ", manager.last_name) AS manager
     FROM employee
     LEFT JOIN role ON employee.role_id = role.id 
     LEFT JOIN department ON role.department_id = department.id
     LEFT JOIN employee manager on manager.id = employee.manager_id
     `;
-    //how should I join the manager id in here?
-    //how can I properly use the promise function?
+    //need to put a await when the promise is present
+    //try && catch is basically .then/.catch
     try {
         const result = await db.promise().query(sql)
         const [rows, fields] = result;
@@ -86,14 +89,9 @@ const viewEmployees = async () => {
     } catch (error) {
         console.log(error);
     }
-    //db.promise().query(sql)
-    // .then(([rows,fields])=>{
-
-    // })
-    //.catch(err =>console.log(err));
 }
 
-//sync method
+//.then method
 const viewRoles = () => {
     const sql = `SELECT * FROM role;`;
     db.query(sql, (err, result) => {
@@ -203,21 +201,12 @@ const addEmployee = () => {
                                 })
                         })
                 })
-
         })
-
-    // .then(data =>{
-    //     //ask TA: how do I connect the role to a role id? && the manager name to a id
-    //     console.log("data",data)
-    //     const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
-    //     VALUES (data.first_name, data.last_name, ,);`;
-    //     db.query(sql,(err, result) =>{
-    //         if (err) throw err;
-    //         console.log(`${data.firstName} ${data.lastName} has been added as a ${data.role}`);
-    //         followUp();
-    //     })
-    // })
 }
+
+//Question: How to connect the role to a role id? && the manager name to a id?
+//Answer: Map the role table and extract the {id, title} in a object. Then take the title as "name", and "id" as value and put in the inquirer choices.
+
 
 const addDepartment = () => {
     inquirer.prompt([
@@ -236,9 +225,6 @@ const addDepartment = () => {
     ]).then(data => {
         let departmentName = {name: data.department};
         dbMethods.addDepartment(departmentName)
-        // db.query(sql, data.department, (err, result) => {
-        //     if (err) throw err;
-        //followUp();
         .then(() => {console.log(`${departmentName.name} department is added!`)})
         .then(() => followUp())
     })
@@ -300,24 +286,18 @@ const addRole = () => {
                 .then(() => console.log(`Added ${role.title} to the database!`))
                 .then(() => followUp())
             })
-    }) 
-    // ]).then(data => {
-    //     const sql = `INSERT INTO role (title, salary, department_id)
-    //                 VALUES (?,?,?)`;
-    //     //Ask Ta:
-    //     db.query(sql, (data.role, data.salary, data.department), (err, result) => {
-    //         if (err) throw err;
-    //         console.log(`${data.role} is added to the ${data.department}!`);
-    //         followUp();
-    //     });
+        }) 
     });
 }
 
-const updateRole = () => {
-    //get the table of all employees (Need Bug fix)
-    let employees = dbMethods.findAllEmployees();
+const updateRole = async () => {
+    //get the table of all employees 
+    //so the system needs time to execute the promise but without a async/await OR .then, it will be pending when it wants to execute other lines of codes
+    let employees = await dbMethods.findAllEmployees();
+    const [rows] = employees;
+    console.log(rows);
     //map the employees
-    const employeeChoices = employees.map(({ first_name, last_name, id }) => ({
+    const employeeChoices = rows.map(({ first_name, last_name, id }) => ({
         name: `${first_name} ${last_name}`,
         value: id
     }));
@@ -330,11 +310,12 @@ const updateRole = () => {
             choices: employeeChoices
         }
     ]).then((answer) => {
+        console.log('employees')
         console.log(answer);
-        let firstName = answer.first_name;
-        let lastName = answer.last_name;
+        // let firstName = answer.first_name;
+        // let lastName = answer.last_name;
+        let employeeID = answer.name;
         
-
             dbMethods.findAllRoles()
                 .then(([rows]) => {
                     let roles = rows;
@@ -352,7 +333,9 @@ const updateRole = () => {
                         }
                     ])
                     .then(data => {
-                        let roleId = answer.role
+                        console.log('role')
+                        console.log(data);
+                        let roleId = data.role;
 
                         dbMethods.findAllEmployees()
                         .then(([rows]) => {
@@ -371,49 +354,31 @@ const updateRole = () => {
                                 }
                             ])
                             .then((answer) => {
+                                console.log('manager')
+                                console.log(answer);
                                 let employee = 
                                     {
-                                        first_name: firstName,
-                                        last_name: lastName,
+                                        // first_name: firstName,
+                                        // last_name: lastName,
                                         role_id: roleId,
-                                        manager_id: answer.manager
+                                        manager_id: answer.manager,
+                                        id: employeeID
                                     }
-                                //ask TA: how to pass in a employee id to be passed into the dbMethods function?
-                                dbMethods.updateRole(employee)
-                                .then(() => console.log(employee.first_name + ' ' + employee.last_name + "'s role has been updated."))
-                                .then(() => followUp())
+                            //Question: How to pass in a employee id to be passed into the dbMethods function?
+                            //Answer: include the employee id in the employee object & call employee.id in the dbMethods.
+                            dbMethods.updateRole(employee)
+                            .then(() => console.log("The employee's role has been updated."))
+                            .then(() => followUp())
                     })
                 })
             })
         })
     })
 }
-    // .then(data => {
-    //     const sql = `UPDATE employee 
-    //                 SET role_id = ${data.role}
-    //                 WHERE first_name =${data.name} AND last_name =${data.name}`
-    //     //ask TA: how can i get last and first name from the data.name? can I use slice() method?
-    //     db.query(sql, (err, result) => {
-    //         if (err) throw err;
-    //         console.log(`${data.name}'s role has been changed to ${data.role}!`);
-    //         followUp();
-    //     })
-    // })
-
-
-
-//these functions intend to generate a list of roles/employees/departments to choose from.
-// const roleSelect = () => {
-
-// }
-
-// const employeeSelect = () => {
-
-// }
-
-// const departmentSelect = () => {
-
-// }
 
 //start the inquirer prompts
 userPrompt();
+
+
+
+
